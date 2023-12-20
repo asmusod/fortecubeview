@@ -50,6 +50,7 @@ class CubeFile():
         self.__atom_numbers = None
         self.__atom_coords = None
         self.__data = None
+        self.__au = True
         if self.filename:
             self.load(self.filename)
 
@@ -89,6 +90,11 @@ class CubeFile():
 
             origin = fp.readline().split()
             self.__natoms = int(origin[0])
+
+            if self.__natoms < 0:  # was negative -> cube is in Angstrom
+                self.__natoms *= -1
+                self.__au = False  # Need angstrom conversion
+
             self.__min = tuple(float(entry) for entry in origin[1:])
 
             infox = fp.readline().split()
@@ -120,6 +126,10 @@ class CubeFile():
 
             data = np.array(
                 [float(entry) for line in fp for entry in line.split()])
+
+            # ORCA Cubes add 1 single line with spin channel and orb#
+            if len(data) - 2 == numx * numy * numz:
+                data = data[2:]
 
             if len(data) != numx * numy * numz:
                 raise Exception(
